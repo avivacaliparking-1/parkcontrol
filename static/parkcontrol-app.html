@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ParkControl</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #f0f4f8;
+      --text: #17202a;
+      --muted: #5d6d7e;
+      --border: #d8e0ea;
+      --primary: #0f766e;
+      --primary-hover: #0b5f58;
+      --success: #2e7d32;
+      --warning: #ef6c00;
+      --danger: #c62828;
+      --info: #1565c0;
+      --shadow: 0 10px 28px rgba(17, 24, 39, 0.08);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(180deg, #edf6f9 0%, #f8fafc 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .container {
+      width: min(1380px, calc(100% - 20px));
+      margin: 10px auto 24px;
+    }
+    .topbar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 8px;
+      z-index: 10;
+    }
+    .title h1 { margin: 0; font-size: clamp(1.2rem, 2vw, 1.9rem); }
+    .title p { margin: 6px 0 0; color: var(--muted); }
+    .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+    .chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #e6fffb;
+      color: #115e59;
+      border: 1px solid #b5ece6;
+      font-weight: 800;
+      font-size: .92rem;
+    }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+    .tab-btn {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .section { display: none; }
+    .section.active { display: block; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat, .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    .stat .num { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 900; margin: 8px 0 4px; }
+    .muted { color: var(--muted); }
+    .grid-2 { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    form { display: grid; gap: 12px; }
+    label { font-weight: 700; font-size: .95rem; }
+    input, select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 1rem;
+      background: #fff;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15,118,110,.12); }
+    .preview {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 18px;
+      padding: 18px;
+      text-align: center;
+      letter-spacing: 4px;
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      font-weight: 900;
+    }
+    .btns, .subfilters, .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 16px;
+      cursor: pointer;
+      font-size: .96rem;
+      font-weight: 800;
+      min-height: 46px;
+    }
+    .mini { min-height: 36px; padding: 8px 10px; font-size: .82rem; border-radius: 10px; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-warning { background: var(--warning); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-info { background: var(--info); color: #fff; }
+    .btn-secondary { background: #e2e8f0; color: #17202a; }
+    .alert {
+      display: none;
+      padding: 14px 15px;
+      border-radius: 14px;
+      font-weight: 700;
+    }
+    .alert.show { display: block; }
+    .alert.ok { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+    .alert.error { background: #ffebee; color: #b71c1c; border: 1px solid #ffcdd2; }
+    .alert.info { background: #e8f0fe; color: #1e3a8a; border: 1px solid #c7d2fe; }
+    .list { display: grid; gap: 10px; max-height: 540px; overflow: auto; }
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #fcfdff;
+    }
+    .plate { font-size: 1.1rem; font-weight: 900; letter-spacing: 1px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .82rem;
+      font-weight: 800;
+    }
+    .auto { background: #dbeafe; color: #1d4ed8; }
+    .moto { background: #ede9fe; color: #6d28d9; }
+    .ok { background: #dcfce7; color: #166534; }
+    .no { background: #fee2e2; color: #991b1b; }
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #fff;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 860px; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { background: #f8fafc; }
+    .control-grid { display: grid; grid-template-columns: .95fr 1.05fr; gap: 16px; }
+    .statusline { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+    @media (max-width: 1100px) {
+      .grid-2, .control-grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 760px) {
+      .tabs { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+      .container { width: min(100%, calc(100% - 12px)); }
+    }
+    @media (max-width: 520px) {
+      .tabs, .stats { grid-template-columns: 1fr; }
+      button, input, select { font-size: 16px; }
+      .subfilters button, .btns button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="title">
+        <h1>ParkControl</h1>
+        <p>Gestión de parqueadero para autos y motos con conexión a PostgreSQL.</p>
+      </div>
+      <div class="chips">
+        <div class="chip" id="chipFecha">Cargando fecha...</div>
+        <div class="chip" id="chipConexion">Verificando base de datos...</div>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="ingreso">1. Registro de ingreso</button>
+      <button class="tab-btn" data-tab="pagos">2. Registro de pagos</button>
+      <button class="tab-btn" data-tab="salida">3. Salida de vehículos</button>
+      <button class="tab-btn" data-tab="control">4. Registro y control</button>
+    </nav>
+
+    <section class="section active" id="tab-ingreso">
+      <div class="stats">
+        <div class="stat"><div>Total Hoy</div><div class="num" id="statTotal">0</div><div class="muted">vehículos</div></div>
+        <div class="stat"><div>Autos</div><div class="num" id="statAutos">0</div><div class="muted">registrados</div></div>
+        <div class="stat"><div>Motos</div><div class="num" id="statMotos">0</div><div class="muted">registradas</div></div>
+        <div class="stat"><div>Pagados</div><div class="num" id="statPagados">0</div><div class="muted">con pago OK</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h2>🚘 Registro de ingreso</h2>
+          <p class="muted">La placa acepta mayúsculas, minúsculas y espacios. El sistema la normaliza, valida y la guarda en la base de datos.</p>
+          <div id="alertIngreso" class="alert"></div>
+          <form id="formIngreso">
+            <div>
+              <label for="placaIngreso">Placa del vehículo</label>
+              <input id="placaIngreso" maxlength="12" placeholder="Ejemplo: ehu 842 o vhz43g" autocomplete="off" />
+            </div>
+            <div>
+              <label>Vista previa normalizada</label>
+              <div class="preview" id="previewPlaca">- - - - - -</div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Fecha actual</label>
+                <input id="fechaActual" readonly />
+              </div>
+              <div>
+                <label>Día</label>
+                <input id="diaActual" readonly />
+              </div>
+            </div>
+            <div class="btns">
+              <button type="submit" class="btn-primary">REGISTRAR</button>
+            </div>
+          </form>
+        </div>
+        <div class="card">
+          <h3>Ingresos del día</h3>
+          <p class="muted">Al cerrar y volver a abrir la aplicación, este listado vuelve a cargarse desde PostgreSQL con la información del día.</p>
+          <div class="list" id="listaIngresos"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tab-pagos">
+      <div class="grid-2">
+        <div class="card">
+          <h2>💳 Registro de pagos</h2>
+          <p class="muted">Se listan los vehículos del día actual pendientes de pago, cargados automáticamente desde el formulario de ingreso.</p>
+          <div id="alertPago" class="alert"></div>
+          <div class="row">
+            <div>
+              <label for="placaPago">Placa seleccionada</label>
+              <input id="placaPago" readonly placeholder="Seleccione una placa del listado" />
+            </div>
+            <div>
+              <label for="metodoPago">Método</label>
+              <select id="metodoPago">
+                <option value="efectivo">Efectivo</option>
+                <option value="virtual">Virtual</option>
+              </select>
+            </div>
+          </div>
+          <div class="btns" style="margin-top:12px;">
+            <button class="btn-success" id="btnPago">PAGO</button>
+            <button class="btn-warning" id="btnCorreccion">CORRECCIÓN</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Vehículos registrados hoy</h3>
+          <div class="list" id="listaPagos"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tab-salida">
+      <div class="card">
+        <h2>🚦 Salida de vehículos</h2>
+        <p class="muted">Se muestran las placas con pago confirmado y estado OK en dos columnas lógicas del formulario de salida.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Placa</th>
+                <th>Tipo</th>
+                <th>Hora ingreso</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody id="tbodySalida"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tab-control">
+      <div class="card">
+        <h2>🗂️ Registro y control</h2>
+        <p class="muted">Permite consultar, crear, modificar y borrar registros. El botón consultar despliega el submenú día, semana y mes cuando no se ingresa placa.</p>
+        <div id="alertControl" class="alert"></div>
+        <div class="control-grid">
+          <div class="card" style="padding:16px;">
+            <div class="row">
+              <div>
+                <label for="controlPlaca">Placa</label>
+                <input id="controlPlaca" placeholder="Ejemplo: EHU842" />
+              </div>
+              <div>
+                <label for="controlPagado">Estado de pago</label>
+                <select id="controlPagado">
+                  <option value="NO">NO</option>
+                  <option value="SÍ">SÍ</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:12px;">
+              <label for="controlHoraPago">Hora de pago</label>
+              <input id="controlHoraPago" placeholder="Ejemplo: 14:32:10" />
+            </div>
+            <div class="btns" style="margin-top:12px;">
+              <button class="btn-info" id="btnConsultarControl">CONSULTAR</button>
+              <button class="btn-primary" id="btnCrearControl">CREAR</button>
+              <button class="btn-warning" id="btnModificarControl">MODIFICAR</button>
+              <button class="btn-danger" id="btnBorrarControl">BORRAR</button>
+            </div>
+            <div class="subfilters" id="subMenuConsulta" style="display:none; margin-top:12px;">
+              <button class="btn-secondary active" data-periodo="dia">Día</button>
+              <button class="btn-secondary" data-periodo="semana">Semana</button>
+              <button class="btn-secondary" data-periodo="mes">Mes</button>
+            </div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div class="statusline">
+              <strong id="controlTitulo">Consulta general</strong>
+              <span class="muted" id="controlConteo">0 registros</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Placa</th>
+                    <th>Tipo</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Día</th>
+                    <th>Pago</th>
+                    <th>Hora Pago</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyControl"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const API = '';
+    let selectedPagoPlate = '';
+    let selectedControlId = null;
+    let lastPeriodo = 'dia';
+
+    const byId = (id) => document.getElementById(id);
+
+    function normalizePlate(raw) {
+      return (raw || '').toUpperCase().replace(/\s+/g, '').trim();
+    }
+
+    function showAlert(id, type, msg) {
+      const box = byId(id);
+      box.className = `alert show ${type}`;
+      box.textContent = msg;
+      setTimeout(() => box.classList.remove('show'), 4500);
+    }
+
+    function formatNow() {
+      const now = new Date();
+      const date = now.toLocaleDateString('es-CO');
+      const day = now.toLocaleDateString('es-CO', { weekday: 'long' });
+      byId('chipFecha').textContent = `${date} · ${day}`;
+      byId('fechaActual').value = date.split('/').map(v => v.padStart(2, '0')).reverse().join('-');
+      byId('diaActual').value = day;
+    }
+
+    async function fetchJson(url, options = {}) {
+      const response = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.msg || data.mensaje || 'Error del servidor');
+      return data;
+    }
+
+    async function checkConnection() {
+      try {
+        const data = await fetchJson(`${API}/api/ping`);
+        byId('chipConexion').textContent = data.status === 'ok' ? 'Base de datos conectada' : 'Error de conexión';
+      } catch {
+        byId('chipConexion').textContent = 'Sin conexión a la base de datos';
+      }
+    }
+
+    function setTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      byId(`tab-${tab}`).classList.add('active');
+    }
+
+    function renderIngresoItem(item) {
+      return `
+        <div class="item">
+          <div>
+            <div class="plate">${item.placa}</div>
+            <div class="muted">${item.fecha} · ${item.hora} · ${item.dia}</div>
+          </div>
+          <div class="actions">
+            <span class="badge ${item.tipo === 'Auto' ? 'auto' : 'moto'}">${item.tipo}</span>
+            <span class="badge ${item.pagado === 'SÍ' ? 'ok' : 'no'}">${item.pagado}</span>
+          </div>
+        </div>`;
+    }
+
+    function renderPagoItem(item) {
+      return `
+        <div class="item">
+          <div>
+            <div class="plate">${item.placa}</div>
+            <div class="muted">${item.tipo} · ${item.fecha} · ${item.hora}</div>
+          </div>
+          <div class="actions">
+            <button class="btn-info mini" onclick="selectPago('${item.placa}')">Seleccionar</button>
+            <span class="badge ${item.pagado === 'SÍ' ? 'ok' : 'no'}">${item.pagado}</span>
+          </div>
+        </div>`;
+    }
+
+    function renderSalidaRow(item) {
+      return `<tr>
+        <td><strong>${item.placa}</strong></td>
+        <td>${item.tipo}</td>
+        <td>${item.hora_ingreso}</td>
+        <td><span class="badge ok">${item.estado}</span></td>
+        <td>${item.fecha}</td>
+      </tr>`;
+    }
+
+    function renderControlRow(item) {
+      return `<tr>
+        <td>${item.id}</td>
+        <td><strong>${item.placa}</strong></td>
+        <td>${item.tipo}</td>
+        <td>${item.fecha}</td>
+        <td>${item.hora}</td>
+        <td>${item.dia || ''}</td>
+        <td>${item.pagado}</td>
+        <td>${item.hora_pago || ''}</td>
+        <td>${item.estado}</td>
+        <td>
+          <div class="actions">
+            <button class="btn-secondary mini" onclick="usarRegistro(${item.id}, '${item.placa}', '${item.pagado}', '${item.hora_pago || ''}')">Usar</button>
+            <button class="btn-danger mini" onclick="borrarRegistro(${item.id})">Borrar</button>
+          </div>
+        </td>
+      </tr>`;
+    }
+
+    async function loadIngresosHoy() {
+      const data = await fetchJson(`${API}/api/registros/hoy`);
+      const rows = data.registros || [];
+      byId('listaIngresos').innerHTML = rows.length ? rows.map(renderIngresoItem).join('') : '<div class="muted">Sin registros del día.</div>';
+      const autos = rows.filter(r => r.tipo === 'Auto').length;
+      const motos = rows.filter(r => r.tipo === 'Moto').length;
+      const pagados = rows.filter(r => r.pagado === 'SÍ').length;
+      byId('statTotal').textContent = rows.length;
+      byId('statAutos').textContent = autos;
+      byId('statMotos').textContent = motos;
+      byId('statPagados').textContent = pagados;
+      const pendientes = rows.filter(r => r.pagado !== 'SÍ');
+      byId('listaPagos').innerHTML = pendientes.length ? pendientes.map(renderPagoItem).join('') : '<div class="muted">No hay vehículos pendientes de pago hoy.</div>';
+    }
+
+    async function loadSalidaHoy() {
+      const data = await fetchJson(`${API}/api/salida`);
+      const rows = data.registros || [];
+      byId('tbodySalida').innerHTML = rows.length ? rows.map(renderSalidaRow).join('') : '<tr><td colspan="5" class="muted">Sin pagos registrados hoy.</td></tr>';
+    }
+
+    async function loadControl(periodo = 'dia') {
+      lastPeriodo = periodo;
+      const data = await fetchJson(`${API}/api/registros?periodo=${periodo}`);
+      const rows = data.registros || [];
+      byId('tbodyControl').innerHTML = rows.length ? rows.map(renderControlRow).join('') : '<tr><td colspan="10" class="muted">Sin registros para este filtro.</td></tr>';
+      byId('controlConteo').textContent = `${rows.length} registros`;
+      byId('controlTitulo').textContent = `Consulta por ${periodo}`;
+    }
+
+    async function consultarControl() {
+      const placa = normalizePlate(byId('controlPlaca').value);
+      if (!placa) {
+        byId('subMenuConsulta').style.display = 'flex';
+        await loadControl(lastPeriodo);
+        return;
+      }
+      byId('subMenuConsulta').style.display = 'none';
+      const data = await fetchJson(`${API}/api/consultar/${placa}`);
+      const rows = data.resultados || [];
+      byId('tbodyControl').innerHTML = rows.length ? rows.map(renderControlRow).join('') : '<tr><td colspan="10" class="muted">No se encontraron registros para esa placa.</td></tr>';
+      byId('controlConteo').textContent = `${rows.length} registros`;
+      byId('controlTitulo').textContent = `Consulta de placa ${placa}`;
+    }
+
+    function selectPago(placa) {
+      selectedPagoPlate = placa;
+      byId('placaPago').value = placa;
+    }
+    window.selectPago = selectPago;
+
+    function usarRegistro(id, placa, pagado, horaPago) {
+      selectedControlId = id;
+      byId('controlPlaca').value = placa;
+      byId('controlPagado').value = pagado || 'NO';
+      byId('controlHoraPago').value = horaPago || '';
+      showAlert('alertControl', 'info', `Registro ${id} cargado para edición.`);
+    }
+    window.usarRegistro = usarRegistro;
+
+    async function borrarRegistro(id) {
+      if (!confirm(`¿Desea borrar el registro ${id}?`)) return;
+      try {
+        const data = await fetchJson(`${API}/api/borrar/${id}`, { method: 'DELETE' });
+        showAlert('alertControl', 'ok', data.msg);
+        await refreshAll();
+      } catch (e) {
+        showAlert('alertControl', 'error', e.message);
+      }
+    }
+    window.borrarRegistro = borrarRegistro;
+
+    async function refreshAll() {
+      await Promise.all([loadIngresosHoy(), loadSalidaHoy(), loadControl(lastPeriodo)]);
+    }
+
+    byId('placaIngreso').addEventListener('input', () => {
+      const plate = normalizePlate(byId('placaIngreso').value);
+      byId('previewPlaca').textContent = plate || '- - - - - -';
+    });
+
+    byId('formIngreso').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const placa = normalizePlate(byId('placaIngreso').value);
+      try {
+        const data = await fetchJson(`${API}/api/ingreso`, {
+          method: 'POST',
+          body: JSON.stringify({ placa })
+        });
+        showAlert('alertIngreso', 'ok', data.msg);
+        byId('formIngreso').reset();
+        byId('previewPlaca').textContent = '- - - - - -';
+        await refreshAll();
+      } catch (e) {
+        showAlert('alertIngreso', 'error', e.message);
+      }
+    });
+
+    byId('btnPago').addEventListener('click', async () => {
+      const placa = normalizePlate(byId('placaPago').value || selectedPagoPlate);
+      const metodo = byId('metodoPago').value;
+      if (!placa) {
+        showAlert('alertPago', 'error', 'Seleccione una placa para registrar pago.');
+        return;
+      }
+      try {
+        const data = await fetchJson(`${API}/api/pago`, {
+          method: 'POST',
+          body: JSON.stringify({ placa, metodo })
+        });
+        showAlert('alertPago', 'ok', `${data.msg} Método: ${data.metodo}.`);
+        byId('placaPago').value = '';
+        selectedPagoPlate = '';
+        await refreshAll();
+      } catch (e) {
+        showAlert('alertPago', 'error', e.message);
+      }
+    });
+
+    byId('btnCorreccion').addEventListener('click', async () => {
+      const placa = normalizePlate(byId('placaPago').value || selectedPagoPlate);
+      if (!placa) {
+        showAlert('alertPago', 'error', 'Seleccione una placa para corrección.');
+        return;
+      }
+      try {
+        const data = await fetchJson(`${API}/api/correccion`, {
+          method: 'POST',
+          body: JSON.stringify({ placa })
+        });
+        showAlert('alertPago', 'ok', data.msg);
+        byId('placaPago').value = '';
+        selectedPagoPlate = '';
+        await refreshAll();
+      } catch (e) {
+        showAlert('alertPago', 'error', e.message);
+      }
+    });
+
+    byId('btnConsultarControl').addEventListener('click', async () => {
+      try {
+        await consultarControl();
+      } catch (e) {
+        showAlert('alertControl', 'error', e.message);
+      }
+    });
+
+    document.querySelectorAll('#subMenuConsulta button').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        document.querySelectorAll('#subMenuConsulta button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        try {
+          await loadControl(btn.dataset.periodo);
+        } catch (e) {
+          showAlert('alertControl', 'error', e.message);
+        }
+      });
+    });
+
+    byId('btnCrearControl').addEventListener('click', async () => {
+      const placa = normalizePlate(byId('controlPlaca').value);
+      const pagado = byId('controlPagado').value;
+      const hora_pago = byId('controlHoraPago').value.trim();
+      if (!placa) {
+        showAlert('alertControl', 'error', 'Ingrese la placa para crear el registro.');
+        return;
+      }
+      try {
+        const data = await fetchJson(`${API}/api/crear`, {
+          method: 'POST',
+          body: JSON.stringify({ placa, pagado, hora_pago })
+        });
+        selectedControlId = data.id;
+        showAlert('alertControl', 'ok', data.msg);
+        await refreshAll();
+      } catch (e) {
+        showAlert('alertControl', 'error', e.message);
+      }
+    });
+
+    byId('btnModificarControl').addEventListener('click', async () => {
+      if (!selectedControlId) {
+        showAlert('alertControl', 'error', 'Primero seleccione un registro con el botón Usar.');
+        return;
+      }
+      try {
+        const data = await fetchJson(`${API}/api/modificar`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            id: selectedControlId,
+            placa: normalizePlate(byId('controlPlaca').value),
+            pagado: byId('controlPagado').value,
+            hora_pago: byId('controlHoraPago').value.trim()
+          })
+        });
+        showAlert('alertControl', 'ok', data.msg);
+        await refreshAll();
+      } catch (e) {
+        showAlert('alertControl', 'error', e.message);
+      }
+    });
+
+    byId('btnBorrarControl').addEventListener('click', async () => {
+      if (!selectedControlId) {
+        showAlert('alertControl', 'error', 'Primero seleccione un registro con el botón Usar.');
+        return;
+      }
+      await borrarRegistro(selectedControlId);
+      selectedControlId = null;
+      byId('controlPlaca').value = '';
+      byId('controlHoraPago').value = '';
+      byId('controlPagado').value = 'NO';
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => setTab(btn.dataset.tab));
+    });
+
+    async function init() {
+      formatNow();
+      await checkConnection();
+      await refreshAll();
+    }
+
+    init().catch(() => {
+      showAlert('alertIngreso', 'error', 'No fue posible cargar los datos iniciales desde la base de datos.');
+    });
+  </script>
+</body>
+</html>
