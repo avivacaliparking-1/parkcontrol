@@ -16,6 +16,7 @@ import os
 import re
 from datetime import datetime, timedelta
 from calendar import monthrange
+from zoneinfo import ZoneInfo
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -33,6 +34,7 @@ DATABASE_URL = os.getenv(
     "postgresql://postgres:postgres@localhost:5432/parkcontrol"
 )
 
+TZ_COLOMBIA = ZoneInfo("America/Bogota")
 PATRON_AUTO = re.compile(r"^[A-Z]{3}[0-9]{3}$")
 PATRON_MOTO = re.compile(r"^[A-Z]{3}[0-9]{2}[A-Z]{1}$")
 DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
@@ -62,7 +64,7 @@ def validar_placa(raw: str) -> dict:
 
 
 def get_fecha_hora() -> dict:
-    ahora = datetime.now()
+    ahora = datetime.now(TZ_COLOMBIA)
     return {
         "fecha": ahora.strftime("%d-%m-%Y"),
         "hora": ahora.strftime("%H:%M:%S"),
@@ -71,7 +73,7 @@ def get_fecha_hora() -> dict:
 
 
 def fechas_rango(periodo: str):
-    hoy = datetime.now().date()
+    hoy = datetime.now(TZ_COLOMBIA).date()
     if periodo == "dia":
         fechas = [hoy]
     elif periodo == "semana":
