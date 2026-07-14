@@ -346,6 +346,13 @@
               <button class="btn-warning" id="btnModificarControl">MODIFICAR</button>
               <button class="btn-danger" id="btnBorrarControl">BORRAR</button>
             </div>
+            <div style="margin-top:12px">
+              <label for="controlFecha">Consultar por fecha exacta</label>
+              <input id="controlFecha" type="date">
+            </div>
+            <div class="btns" style="margin-top:8px">
+              <button class="btn-info" id="btnConsultarFecha">CONSULTAR POR FECHA</button>
+            </div>
             <div class="subfilters" id="subMenuConsulta" style="display:none; margin-top:12px;">
               <button class="btn-secondary active" data-periodo="dia">Día</button>
               <button class="btn-secondary" data-periodo="semana">Semana</button>
@@ -375,6 +382,24 @@
                 </thead>
                 <tbody id="tbodyControl"></tbody>
               </table>
+              <div class="table-wrap" style="margin-top:16px">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Placa</th>
+                      <th>Fecha</th>
+                      <th>Hora registro</th>
+                      <th>Hora pago</th>
+                      <th>Método pago</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyFecha">
+                    <tr><td colspan="5" class="muted">Seleccione una fecha para consultar.</td></tr>
+                    </tbody>
+                   </table>
+                  </div>  
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -490,6 +515,16 @@
             <button class="btn-danger mini" onclick="borrarRegistro(${item.id})">Borrar</button>
           </div>
         </td>
+      </tr>`;
+    }
+
+    function renderFechaRow(item) {
+      return `<tr>
+        <td><strong>${item.placa}</strong></td>
+        <td>${item.fecha}</td>
+        <td>${item.hora_registro || '—'}</td>
+        <td>${item.hora_pago || '—'}</td>
+        <td>${item.metodo_pago || '—'}</td>
       </tr>`;
     }
 
@@ -640,6 +675,33 @@
       }
     });
 
+    async function consultarPorFecha() {
+      const fechaInput = byId('controlFecha').value;
+      if (!fechaInput) {
+        showAlert('alertControl', 'error', 'Seleccione una fecha para consultar.');
+        return;
+      }
+      const [y, m, d] = fechaInput.split('-');
+      const fechaBD = `${d}-${m}-${y}`;
+
+      try {
+        const data = await fetchJson(`${API}/api/consultarfecha/${fechaBD}`);
+        const rows = data.resultados;
+        byId('tbodyFecha').innerHTML = rows.length
+          ? rows.map(renderFechaRow).join('')
+          : '<tr><td colspan="5" class="muted">No se encontraron registros para esa fecha ${fechaBD}.</td></tr>';
+          } catch (e) {
+        showAlert('alertControl', 'error', e.message);
+      }
+    }
+
+    byId('btnConsultarFecha').addEventListener('click', async () => {
+      try {
+        await consultarPorFecha();
+      } catch (e) {
+        showAlert('alertControl', 'error', e.message);
+      }
+    });
     document.querySelectorAll('#subMenuConsulta button').forEach(btn => {
       btn.addEventListener('click', async () => {
         document.querySelectorAll('#subMenuConsulta button').forEach(b => b.classList.remove('active'));

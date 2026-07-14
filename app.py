@@ -336,6 +336,30 @@ def consultar_placa(placa):
         conn.close()
     return jsonify({"ok": True, "placa": placa, "resultados": [dict(r) for r in rows], "total": len(rows)})
 
+#consultar registros por fecha
+@app.route('/api/consultarfecha/<fecha>', methods=['GET'])
+def consultar_por_fecha(fecha):
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT i.placa,
+                       i.fecha,
+                       i.hora        AS hora_registro,
+                       p.hora_pago    AS hora_pago,
+                       p.metodo      AS metodo_pago
+                FROM ingresos i
+                LEFT JOIN pagos p
+                       ON p.placa = i.placa
+                      AND p.fecha_pago = i.fecha
+                WHERE i.fecha = %s
+                  AND i.estado != 'CORRECCION'
+                ORDER BY i.hora ASC
+            """, (fecha,))
+            rows = cur.fetchall()
+    finally:
+        conn.close()
+    return jsonify({"ok" : True,"fecha" : fecha, "resultados" : [dict(r) for r in rows], "total" : len(rows) })
 
 @app.route("/api/registros", methods=["GET"])
 def todos_registros():
